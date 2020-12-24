@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: e2e-test
+    build:
+      context: .
+      target: e2e-test
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules # 'hack' prevents node_modules/ in the container from being overridden
+    working_dir: /usr/src/app
+    command: yarn test:e2e
+    environment:
+      PORT: 3500
+      NODE_ENV: test
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: e2e-test
+      DB_USER: postgres
+      DB_PASS: postgres
+    networks:
+      - webnet
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: postgres-e2e
+    image: postgres
+    networks:
+      - webnet
+    environment:
+      POSTGRES_DB: e2e-test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PG_DATA: /var/lib/postgresql/data
+    volumes:
+      # - ./seed.db.sql:/docker-entrypoint-initdb.d/db.sql <- run only once when the pgdata volume is first created (when run via docker-compose)
+      - pgdata:/var/lib/postgresql/data # or specify a local folder like ./docker-volumes/pgdata:/var/lib/postgresql/data
+
+networks:
+  webnet:
+
+volumes:
+  pgdata:
+  logs:
